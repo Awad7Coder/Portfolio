@@ -24,6 +24,9 @@ body {
 }
 
 body {
+    zoom: 90%;
+    -moz-transform: scale(0.9);
+    -moz-transform-origin: top center;
     opacity: 0;
     transition: opacity 0.9s ease
 }

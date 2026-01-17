@@ -325,6 +325,9 @@ h2::after {
 }
 
 body {
+  zoom: 90%;
+  -moz-transform: scale(0.9);
+  -moz-transform-origin: top center;
   background: #000;
   font-family: "Cinzel Decorative", serif;
   position: relative;
@@ -1271,3 +1274,5 @@ body::before {
   outline: 3px solid rgb(212 175 55/0.18);
   outline-offset: 2px;
 }
+
+/* Resposive  */
