@@ -1,47 +1,350 @@
-const SHOW_GLYPHS = !0; const glyphs = ["𓂀", "𓊖", "𓆑", "𓇌", "𓍯", "𓂓", "𓄿", "𓆣", "𓋴", "𓊹", "𓈖", "𓊃", "𓇳", "𓏏", "𓐍", "𓂋", "𓆤", "𓂧", "𓈎", "𓋹", "⟐", "⊕", "∴", "λ", "0", "1",]; const typedEl = document.getElementById("typed"); const hintEl = document.getElementById("hint"); const glyphCol = document.getElementById("glyphCol"); const bgGlyphs = document.getElementById("bgGlyphs"); const starCanvas = document.getElementById("stars"); const sctx = starCanvas.getContext && starCanvas.getContext("2d"); const swarm = document.getElementById("swarm"); const portal = document.getElementById("portal"); const portalText = document.getElementById("portalText"); const ankhLeft = document.getElementById("ankhLeft"); const ankhRight = document.getElementById("ankhRight"); let nameBuffer = ""; let revealing = !1; function resizeStars() { const dpr = window.devicePixelRatio || 1; starCanvas.width = innerWidth * dpr; starCanvas.height = innerHeight * dpr; starCanvas.style.width = innerWidth + "px"; starCanvas.style.height = innerHeight + "px"; if (sctx) sctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-window.addEventListener("resize", () => { resizeStars(); initStars() }); resizeStars(); let stars = []; function initStars() { stars = []; const count = Math.round(Math.max(40, Math.min(220, (innerWidth * innerHeight) / 60000))); for (let i = 0; i < count; i++) { stars.push({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: Math.random() * 1.6 + 0.2, a: Math.random() * 0.7 + 0.2, vy: Math.random() * 0.25 + 0.02, }) } }
+const SHOW_GLYPHS = !0;
+const glyphs = ["𓂀","𓊖","𓆑","𓇌","𓍯","𓂓","𓄿","𓆣","𓋴","𓊹","𓈖","𓊃","𓇳","𓏏","𓐍","𓂋","𓆤","𓂧","𓈎","𓋹","⟐","⊕","∴","λ","0","1"];
+const typedEl = document.getElementById("typed");
+const hintEl = document.getElementById("hint");
+const glyphCol = document.getElementById("glyphCol");
+const bgGlyphs = document.getElementById("bgGlyphs");
+const starCanvas = document.getElementById("stars");
+const sctx = starCanvas.getContext && starCanvas.getContext("2d");
+const swarm = document.getElementById("swarm");
+const portal = document.getElementById("portal");
+const portalText = document.getElementById("portalText");
+const ankhLeft = document.getElementById("ankhLeft");
+const ankhRight = document.getElementById("ankhRight");
+const clearBtn = document.getElementById("clearBtn");
+const enterBtn = document.getElementById("enterBtn");
+
+let nameBuffer = "";
+let revealing = !1;
+let shift = !1, caps = !1;
+let hiddenInput = null;
+let prevHiddenValue = "";
+
+function createHiddenInput() {
+  hiddenInput = document.createElement("input");
+  hiddenInput.type = "text";
+  hiddenInput.id = "hiddenInput";
+  hiddenInput.setAttribute("autocomplete", "off");
+  hiddenInput.setAttribute("autocorrect", "off");
+  hiddenInput.setAttribute("autocapitalize", "off");
+  hiddenInput.setAttribute("spellcheck", "false");
+  hiddenInput.style.position = "absolute";
+  hiddenInput.style.left = "-9999px";
+  hiddenInput.style.top = "0";
+  hiddenInput.style.width = "1px";
+  hiddenInput.style.height = "1px";
+  hiddenInput.style.opacity = "0";
+  document.body.appendChild(hiddenInput);
+  hiddenInput.addEventListener("input", (e) => {
+    if (revealing) return;
+    const v = e.target.value || "";
+    if (SHOW_GLYPHS && v.length > prevHiddenValue.length) {
+      const added = v.slice(prevHiddenValue.length);
+      for (const ch of added) emitGlyphParticle(ch);
+    } else if (SHOW_GLYPHS && v.length < prevHiddenValue.length) {
+      emitGlyphParticle("⌫");
+    }
+    prevHiddenValue = v;
+    nameBuffer = v;
+    updateTyped();
+  });
+  hiddenInput.addEventListener("keydown", (e) => {
+    if (revealing) return;
+    if (e.key === "Enter") {
+      e.preventDefault();
+      startReveal();
+      SHOW_GLYPHS && emitGlyphParticle("↵");
+      return;
+    }
+    if (e.key === "CapsLock") {
+      caps = !caps;
+      hintEl && (hintEl.textContent = caps ? "Caps ON" : "Enter your name");
+    }
+  });
+}
+
+function focusHiddenInput() {
+  if (!hiddenInput || revealing) return;
+  try { hiddenInput.focus(); } catch (e) {}
+  setTimeout(() => { try { hiddenInput.focus(); } catch (e) {} }, 100);
+}
+
+function updateTyped() {
+  if (typedEl) typedEl.textContent = nameBuffer || "";
+}
+
+function appendGlyph(g) {
+  if (revealing) return;
+  nameBuffer += g;
+  if (hiddenInput) {
+    hiddenInput.value = nameBuffer;
+    prevHiddenValue = nameBuffer;
+  }
+  updateTyped();
+  SHOW_GLYPHS && emitGlyphParticle(g);
+  focusHiddenInput();
+}
+
+createHiddenInput();
+
+(function buildGlyphChips() {
+  if (!glyphCol) return;
+  const sample = glyphs.slice(0, 12);
+  sample.forEach((g) => {
+    const el = document.createElement("div");
+    el.className = "glyph-chip pulse";
+    el.textContent = g;
+    el.title = "Insert " + g;
+    el.addEventListener("click", () => {
+      appendGlyph(g);
+      SHOW_GLYPHS && emitGlyphParticleFromElement(el, g, { burst: !0 });
+    });
+    glyphCol.appendChild(el);
+  });
+})();
+
+function resizeStars() {
+  const dpr = window.devicePixelRatio || 1;
+  starCanvas.width = innerWidth * dpr;
+  starCanvas.height = innerHeight * dpr;
+  starCanvas.style.width = innerWidth + "px";
+  starCanvas.style.height = innerHeight + "px";
+  if (sctx) sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+window.addEventListener("resize", () => { resizeStars(); initStars(); });
+resizeStars();
+
+let stars = [];
+function initStars() {
+  stars = [];
+  const count = Math.round(Math.max(40, Math.min(220, (innerWidth * innerHeight) / 60000)));
+  for (let i = 0; i < count; i++) stars.push({ x: Math.random()*innerWidth, y: Math.random()*innerHeight, r: Math.random()*1.6+0.2, a: Math.random()*0.7+0.2, vy: Math.random()*0.25+0.02 });
+}
+
 function renderStars() {
-  if (!sctx) return; sctx.clearRect(0, 0, innerWidth, innerHeight); for (const s of stars) { s.y += s.vy; if (s.y > innerHeight) s.y = 0; sctx.beginPath(); sctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); sctx.fillStyle = `rgba(255,240,200,${s.a})`; sctx.fill() }
-  requestAnimationFrame(renderStars)
+  if (!sctx) return;
+  sctx.clearRect(0,0,innerWidth,innerHeight);
+  for (const s of stars) {
+    s.y += s.vy;
+    if (s.y > innerHeight) s.y = 0;
+    sctx.beginPath();
+    sctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    sctx.fillStyle = `rgba(255,240,200,${s.a})`;
+    sctx.fill();
+  }
+  requestAnimationFrame(renderStars);
 }
-initStars(); renderStars(); (function buildGlyphChips() { if (!glyphCol) return; const sample = glyphs.slice(0, 12); sample.forEach((g) => { const el = document.createElement("div"); el.className = "glyph-chip pulse"; el.textContent = g; el.title = "Insert " + g; el.addEventListener("click", () => { nameBuffer += g; updateTyped(); if (SHOW_GLYPHS) emitGlyphParticleFromElement(el, g, { burst: !0 }) }); glyphCol.appendChild(el) }) })(); function updateTyped() { if (typedEl) typedEl.textContent = nameBuffer || "" }
-const BG_MAX = 30; function createBackgroundGlyphs() {
-  if (!bgGlyphs || !SHOW_GLYPHS) return; let created = 0; function createOne() { if (created >= BG_MAX) return; const g = document.createElement("div"); g.className = "bg-glyph"; g.textContent = glyphs[Math.floor(Math.random() * glyphs.length)]; const left = Math.random() * 100; const top = 60 + Math.random() * 40; g.style.left = left + "%"; g.style.top = top + "%"; const dur = 10 + Math.random() * 16; const delay = Math.random() * 6; g.style.animationDuration = dur + "s"; g.style.animationDelay = delay + "s"; g.style.fontSize = 12 + Math.random() * 22 + "px"; g.style.opacity = (0.6 + Math.random() * 0.4).toString(); bgGlyphs.appendChild(g); created++; setTimeout(createOne, 60 + Math.random() * 160) }
-  createOne()
+
+initStars();
+renderStars();
+
+const BG_MAX = 30;
+function createBackgroundGlyphs() {
+  if (!bgGlyphs || !SHOW_GLYPHS) return;
+  let created = 0;
+  function createOne() {
+    if (created >= BG_MAX) return;
+    const g = document.createElement("div");
+    g.className = "bg-glyph";
+    g.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+    const left = Math.random()*100;
+    const top = 60 + Math.random()*40;
+    g.style.left = left + "%";
+    g.style.top = top + "%";
+    const dur = 10 + Math.random()*16;
+    const delay = Math.random()*6;
+    g.style.animationDuration = dur + "s";
+    g.style.animationDelay = delay + "s";
+    g.style.fontSize = 12 + Math.random()*22 + "px";
+    g.style.opacity = (0.6 + Math.random()*0.4).toString();
+    bgGlyphs.appendChild(g);
+    created++;
+    setTimeout(createOne, 60 + Math.random()*160);
+  }
+  createOne();
 }
-function emitGlyphParticleFromElement(el, providedGlyph = null, opts = { burst: !1 }) { const rect = el.getBoundingClientRect(); const x = rect.left + rect.width / 2; const y = rect.top + rect.height / 2; const glyph = providedGlyph || glyphs[Math.floor(Math.random() * glyphs.length)]; emitGlyphParticle(glyph, x, y, opts) }
+
+function emitGlyphParticleFromElement(el, providedGlyph = null, opts = { burst: !1 }) {
+  const rect = el.getBoundingClientRect();
+  const x = rect.left + rect.width/2;
+  const y = rect.top + rect.height/2;
+  const glyph = providedGlyph || glyphs[Math.floor(Math.random()*glyphs.length)];
+  emitGlyphParticle(glyph, x, y, opts);
+}
+
 function emitGlyphParticle(glyph = "𓂀", startX = null, startY = null, opts = { burst: !1 }) {
-  if (!SHOW_GLYPHS) return; const p = document.createElement("div"); p.className = "particle"; p.textContent = glyph; document.body.appendChild(p); let sx = startX !== null ? startX : innerWidth * 0.2 + (Math.random() * 80 - 40); let sy = startY !== null ? startY : innerHeight * 0.4 + (Math.random() * 120 - 60); p.style.left = sx + "px"; p.style.top = sy + "px"; p.style.opacity = 0; p.style.transform = "translate(-50%,-50%) scale(.8)"; requestAnimationFrame(() => {
-    p.classList.add("fly"); const tx = innerWidth * 0.5 + (Math.random() * 240 - 120); const ty = innerHeight * 0.33 + (Math.random() * 120 - 60); p.style.transform = `translate(-50%,-50%) translate(${tx - sx}px, ${ty - sy
-      }px) rotate(${Math.random() * 360}deg) scale(${1 + Math.random() * 0.6})`; p.style.opacity = 1
-  }); setTimeout(() => { p.style.opacity = 0; p.style.transform += " translateZ(0) scale(.6)" }, 900 + (opts.burst ? 90 : 0)); setTimeout(() => p.remove(), 1600)
+  if (!SHOW_GLYPHS) return;
+  const p = document.createElement("div");
+  p.className = "particle";
+  p.textContent = glyph;
+  document.body.appendChild(p);
+  const sx = startX !== null ? startX : innerWidth*0.2 + (Math.random()*80-40);
+  const sy = startY !== null ? startY : innerHeight*0.4 + (Math.random()*120-60);
+  p.style.left = sx + "px";
+  p.style.top = sy + "px";
+  p.style.opacity = "0";
+  p.style.transform = "translate(-50%,-50%) scale(.8)";
+  requestAnimationFrame(() => {
+    p.classList.add("fly");
+    const tx = innerWidth*0.5 + (Math.random()*240-120);
+    const ty = innerHeight*0.33 + (Math.random()*120-60);
+    p.style.transform = `translate(-50%,-50%) translate(${tx-sx}px, ${ty-sy}px) rotate(${Math.random()*360}deg) scale(${1+Math.random()*0.6})`;
+    p.style.opacity = "1";
+  });
+  setTimeout(() => {
+    p.style.opacity = "0";
+    p.style.transform += " translateZ(0) scale(.6)";
+  }, 900 + (opts.burst ? 90 : 0));
+  setTimeout(() => p.remove(), 1600);
 }
+
 function spawnSwarm(n = 80) {
-  if (!SHOW_GLYPHS || !swarm) return; swarm.innerHTML = ""; const W = innerWidth, H = innerHeight; for (let i = 0; i < n; i++) {
-    const el = document.createElement("div"); el.className = "glyph"; el.textContent = glyphs[Math.floor(Math.random() * glyphs.length)]; const edge = Math.random(); if (edge < 0.25) { el.style.left = Math.random() * W + "px"; el.style.top = -40 + "px" } else if (edge < 0.5) { el.style.left = Math.random() * W + "px"; el.style.top = H + 40 + "px" } else if (edge < 0.75) { el.style.left = -40 + "px"; el.style.top = Math.random() * H + "px" } else { el.style.left = W + 40 + "px"; el.style.top = Math.random() * H + "px" }
-    el.style.fontSize = 14 + Math.random() * 28 + "px"; swarm.appendChild(el); const toX = W * (0.2 + Math.random() * 0.6); const toY = H * (0.1 + Math.random() * 0.8); setTimeout(() => {
-      el.style.transition = `left ${6 + Math.random() * 6}s linear, top ${6 + Math.random() * 6
-        }s linear, transform 6s linear`; el.style.left = toX + "px"; el.style.top = toY + "px"; el.style.transform = `rotate(${Math.random() * 360}deg)`
-    }, 80 + Math.random() * 400)
+  if (!SHOW_GLYPHS || !swarm) return;
+  swarm.innerHTML = "";
+  const W = innerWidth, H = innerHeight;
+  for (let i = 0; i < n; i++) {
+    const el = document.createElement("div");
+    el.className = "glyph";
+    el.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+    const edge = Math.random();
+    if (edge < 0.25) { el.style.left = Math.random()*W + "px"; el.style.top = -40 + "px"; }
+    else if (edge < 0.5) { el.style.left = Math.random()*W + "px"; el.style.top = H + 40 + "px"; }
+    else if (edge < 0.75) { el.style.left = -40 + "px"; el.style.top = Math.random()*H + "px"; }
+    else { el.style.left = W + 40 + "px"; el.style.top = Math.random()*H + "px"; }
+    el.style.fontSize = 14 + Math.random()*28 + "px";
+    swarm.appendChild(el);
+    const toX = W*(0.2 + Math.random()*0.6);
+    const toY = H*(0.1 + Math.random()*0.8);
+    setTimeout(() => {
+      el.style.transition = `left ${6 + Math.random()*6}s linear, top ${6 + Math.random()*6}s linear, transform 6s linear`;
+      el.style.left = toX + "px";
+      el.style.top = toY + "px";
+      el.style.transform = `rotate(${Math.random()*360}deg)`;
+    }, 80 + Math.random()*400);
   }
 }
-function startReveal() { if (revealing) return; revealing = !0; const name = nameBuffer.trim() || "Stranger"; if (hintEl) hintEl.textContent = `Welcome, ${name} — opening glyph portal...`; spawnSwarm(120); setTimeout(() => gatherToPortal(name), 900) }
-function gatherToPortal(name) {
-  const elems = Array.from(document.querySelectorAll(".glyph")); const centerX = innerWidth / 2; const centerY = innerHeight / 2; elems.forEach((el, i) => {
-    const angle = (i / elems.length) * Math.PI * 8 + (Math.random() * 0.8 - 0.4); const r = 40 + Math.random() * 180; const tx = centerX + Math.cos(angle) * r; const ty = centerY + Math.sin(angle) * r; el.style.transition = `left ${700 + Math.random() * 500
-      }ms cubic-bezier(.2,.9,.22,1), top ${700 + Math.random() * 500
-      }ms cubic-bezier(.2,.9,.22,1), transform 900ms ease, opacity 700ms ease`; el.style.left = tx + "px"; el.style.top = ty + "px"; el.style.transform = `scale(${0.9 + Math.random() * 0.6}) rotate(${Math.random() * 720
-        }deg)`
-  }); setTimeout(() => { portal.classList.add("active"); elems.forEach((el, idx) => setTimeout(() => { el.style.opacity = "0.12" }, 220 + idx * 6)) }, 1400); setTimeout(() => { portalText.textContent = `WELCOME, ${name.toUpperCase()}`; portalText.classList.add("show") }, 2000); setTimeout(() => { document.body.style.transition = "opacity 700ms ease"; document.body.style.opacity = 0; setTimeout(() => { window.location.href = "home.html" }, 700) }, 3600)
+
+function startReveal() {
+  if (revealing) return;
+  revealing = !0;
+  if (hiddenInput) hiddenInput.blur();
+  const name = nameBuffer.trim() || "Stranger";
+  hintEl && (hintEl.textContent = `Welcome, ${name} — opening glyph portal...`);
+  spawnSwarm(120);
+  setTimeout(() => gatherToPortal(name), 900);
 }
-function pulseAnkhAndBinary() { const t = document.createElement("div"); t.style.position = "absolute"; t.style.right = "20px"; t.style.bottom = "18px"; t.style.padding = "8px 12px"; t.style.borderRadius = "10px"; t.style.background = "linear-gradient(90deg, rgba(214,169,74,0.12), rgba(15,185,185,0.06))"; t.style.color = "#03131c"; t.style.fontWeight = "900"; t.style.zIndex = 12; t.textContent = "☥ 010101"; const c = document.getElementById("cartouche"); if (c) c.appendChild(t); setTimeout(() => (t.style.opacity = "0"), 1700); setTimeout(() => t.remove(), 2300) }
-let shift = !1, caps = !1; document.addEventListener("keydown", (e) => {
-  if (revealing) return; if (e.key === "Backspace") { nameBuffer = nameBuffer.slice(0, -1); updateTyped(); e.preventDefault(); if (SHOW_GLYPHS) emitGlyphParticle("⌫"); return }
-  if (e.key === "Enter") { startReveal(); if (SHOW_GLYPHS) emitGlyphParticle("↵"); return }
-  if (e.key === "CapsLock") { caps = !caps; if (hintEl) hintEl.textContent = caps ? "Caps ON" : "Enter your name"; return }
-  if (e.key.length === 1) { if (/^[\w\d \-\=\[\]\\;',\.\/`]$/.test(e.key)) { nameBuffer += e.key; updateTyped(); if (SHOW_GLYPHS) emitGlyphParticle(e.key); } }
-}); const clearBtn = document.getElementById("clearBtn"); const enterBtn = document.getElementById("enterBtn"); if (clearBtn)
-  clearBtn.addEventListener("click", () => { if (revealing) return; nameBuffer = ""; updateTyped() }); if (enterBtn) enterBtn.addEventListener("click", () => startReveal()); function insertAnkhPulse(sideEl) { if (revealing) return; nameBuffer += "☥"; updateTyped(); sideEl.classList.add("pulse"); setTimeout(() => sideEl.classList.remove("pulse"), 520) }
-if (ankhLeft)
-  ankhLeft.addEventListener("click", () => insertAnkhPulse(ankhLeft)); if (ankhRight)
-  ankhRight.addEventListener("click", () => insertAnkhPulse(ankhRight)); setInterval(() => { const chips = Array.from(document.querySelectorAll(".glyph-chip")); if (!chips.length || !SHOW_GLYPHS) return; const el = chips[Math.floor(Math.random() * chips.length)]; emitGlyphParticleFromElement(el) }, 900); window.addEventListener("load", () => { document.body.classList.add("fade-in"); if (SHOW_GLYPHS) createBackgroundGlyphs(); if (SHOW_GLYPHS) setTimeout(() => spawnSwarm(28), 500); }); updateTyped()
+
+function gatherToPortal(name) {
+  const elems = Array.from(document.querySelectorAll(".glyph"));
+  const centerX = innerWidth/2, centerY = innerHeight/2;
+  elems.forEach((el,i) => {
+    const angle = (i/elems.length)*Math.PI*8 + (Math.random()*0.8-0.4);
+    const r = 40 + Math.random()*180;
+    const tx = centerX + Math.cos(angle)*r;
+    const ty = centerY + Math.sin(angle)*r;
+    el.style.transition = `left ${700 + Math.random()*500}ms cubic-bezier(.2,.9,.22,1), top ${700 + Math.random()*500}ms cubic-bezier(.2,.9,.22,1), transform 900ms ease, opacity 700ms ease`;
+    el.style.left = tx + "px";
+    el.style.top = ty + "px";
+    el.style.transform = `scale(${0.9 + Math.random()*0.6}) rotate(${Math.random()*720}deg)`;
+  });
+  setTimeout(() => {
+    portal.classList.add("active");
+    elems.forEach((el,idx) => setTimeout(() => { el.style.opacity = "0.12"; }, 220 + idx*6));
+  }, 1400);
+  setTimeout(() => {
+    portalText.textContent = `WELCOME, ${name.toUpperCase()}`;
+    portalText.classList.add("show");
+  }, 2000);
+  setTimeout(() => {
+    document.body.style.transition = "opacity 700ms ease";
+    document.body.style.opacity = "0";
+    setTimeout(() => { window.location.href = "home.html"; }, 700);
+  }, 3600);
+}
+
+function pulseAnkhAndBinary() {
+  const t = document.createElement("div");
+  t.style.position = "absolute";
+  t.style.right = "20px";
+  t.style.bottom = "18px";
+  t.style.padding = "8px 12px";
+  t.style.borderRadius = "10px";
+  t.style.background = "linear-gradient(90deg, rgba(214,169,74,0.12), rgba(15,185,185,0.06))";
+  t.style.color = "#03131c";
+  t.style.fontWeight = "900";
+  t.style.zIndex = "12";
+  t.textContent = "☥ 010101";
+  const c = document.getElementById("cartouche");
+  if (c) c.appendChild(t);
+  setTimeout(() => (t.style.opacity = "0"), 1700);
+  setTimeout(() => t.remove(), 2300);
+}
+
+document.addEventListener("keydown", (e) => {
+  if (revealing) return;
+  if (document.activeElement === hiddenInput) return;
+  if (e.key === "Backspace") {
+    nameBuffer = nameBuffer.slice(0, -1);
+    if (hiddenInput) { hiddenInput.value = nameBuffer; prevHiddenValue = nameBuffer; }
+    updateTyped();
+    e.preventDefault();
+    SHOW_GLYPHS && emitGlyphParticle("⌫");
+    return;
+  }
+  if (e.key === "Enter") {
+    startReveal();
+    SHOW_GLYPHS && emitGlyphParticle("↵");
+    return;
+  }
+  if (e.key === "CapsLock") {
+    caps = !caps;
+    hintEl && (hintEl.textContent = caps ? "Caps ON" : "Enter your name");
+    return;
+  }
+  if (e.key.length === 1) {
+    if (/^[\w\d \-\=\[\]\\;',\.\/`~]$/.test(e.key)) {
+      nameBuffer += e.key;
+      if (hiddenInput) { hiddenInput.value = nameBuffer; prevHiddenValue = nameBuffer; }
+      updateTyped();
+      SHOW_GLYPHS && emitGlyphParticle(e.key);
+    }
+  }
+});
+
+if (clearBtn) clearBtn.addEventListener("click", () => {
+  if (revealing) return;
+  nameBuffer = "";
+  if (hiddenInput) { hiddenInput.value = ""; prevHiddenValue = ""; }
+  updateTyped();
+  focusHiddenInput();
+});
+
+if (enterBtn) enterBtn.addEventListener("click", () => startReveal());
+
+if (ankhLeft) ankhLeft.addEventListener("click", () => appendGlyph("☥"));
+if (ankhRight) ankhRight.addEventListener("click", () => appendGlyph("☥"));
+
+setInterval(() => {
+  const chips = Array.from(document.querySelectorAll(".glyph-chip"));
+  if (!chips.length || !SHOW_GLYPHS) return;
+  const el = chips[Math.floor(Math.random()*chips.length)];
+  emitGlyphParticleFromElement(el);
+}, 900);
+
+document.addEventListener("click", (e) => {
+  if (!revealing && e.target.closest('.terminal-container, .terminal')) focusHiddenInput();
+});
+
+window.addEventListener("load", () => {
+  document.body.classList.add("fade-in");
+  SHOW_GLYPHS && createBackgroundGlyphs();
+  SHOW_GLYPHS && setTimeout(() => spawnSwarm(28), 500);
+  setTimeout(() => focusHiddenInput(), 300);
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && !revealing) setTimeout(() => focusHiddenInput(), 100);
+});
+
+updateTyped();

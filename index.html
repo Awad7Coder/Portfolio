@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>𓋹𓍑𓋴𓇋𓈖𓃀</title>
-      <link rel="icon" type="image/x-icon" href="images/icon.png">
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@300;400;600;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="css/welcome.min.css" />
-  </head>
-  <body>
-    <div
-      style="
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>𓋹𓍑𓋴𓇋𓈖𓃀</title>
+  <link rel="icon" type="image/x-icon" href="images/icon.png">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@300;400;600;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/welcome.min.css" />
+</head>
+
+<body>
+  <div style="
         position: fixed;
         left: 20px;
         top: 18px;
@@ -25,86 +25,73 @@
         align-items: center;
         gap: 12px;
         font-family: monospace;
-      "
-    >
-      <div style="font-size: 28px">☥</div>
-      <div style="color: var(--turquoise)">0101 · PHARAONIC CODE</div>
-    </div>
+      ">
+    <div style="font-size: 28px">☥</div>
+    <div style="color: var(--turquoise)">0101 · PHARAONIC CODE</div>
+  </div>
 
-    <div class="bg-layer" aria-hidden="true">
-      <canvas id="stars"></canvas>
+  <div class="bg-layer" aria-hidden="true">
+    <canvas id="stars"></canvas>
 
-      <svg
-        class="backdrop"
-        viewBox="0 0 1200 360"
-        preserveAspectRatio="xMidYMax slice"
-        aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="sandGrad" x1="0" x2="1">
-            <stop offset="0" stop-color="#f6d98c" />
-            <stop offset="1" stop-color="#d4a94a" />
-          </linearGradient>
-        </defs>
-        <g>
-          <!-- subtle distant shapes / pyramids -->
-          <path d="M80 360 L360 60 L640 360 Z" fill="rgba(0,0,0,0.12)" />
-          <path d="M340 360 L680 18 L1040 360 Z" fill="url(#sandGrad)" />
-          <path d="M760 360 L980 160 L1200 360 Z" fill="rgba(0,0,0,0.10)" />
-        </g>
-      </svg>
+    <svg class="backdrop" viewBox="0 0 1200 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="sandGrad" x1="0" x2="1">
+          <stop offset="0" stop-color="#f6d98c" />
+          <stop offset="1" stop-color="#d4a94a" />
+        </linearGradient>
+      </defs>
+      <g>
+        <!-- subtle distant shapes / pyramids -->
+        <path d="M80 360 L360 60 L640 360 Z" fill="rgba(0,0,0,0.12)" />
+        <path d="M340 360 L680 18 L1040 360 Z" fill="url(#sandGrad)" />
+        <path d="M760 360 L980 160 L1200 360 Z" fill="rgba(0,0,0,0.10)" />
+      </g>
+    </svg>
 
-      <div class="bg-glyphs" id="bgGlyphs"></div>
-    </div>
+    <div class="bg-glyphs" id="bgGlyphs"></div>
+  </div>
 
-    <!-- ankhs -->
-    <div id="ankhLeft" class="ankh-side ankh-left" title="Insert Ankh">
-      <div class="symbol">☥</div>
-    </div>
-    <div id="ankhRight" class="ankh-side ankh-right" title="Insert Ankh">
-      <div class="symbol">☥</div>
-    </div>
+  <!-- ankhs -->
+  <div id="ankhLeft" class="ankh-side ankh-left" title="Insert Ankh">
+    <div class="symbol">☥</div>
+  </div>
+  <div id="ankhRight" class="ankh-side ankh-right" title="Insert Ankh">
+    <div class="symbol">☥</div>
+  </div>
 
-    <!-- content -->
-    <div class="container" role="main">
-      <div
-        class="cartouche"
-        id="cartouche"
-        role="region"
-        aria-label="Welcome terminal"
-      >
-        <div class="glyph-col" id="glyphCol" aria-hidden="false"></div>
+  <!-- content -->
+  <div class="container" role="main">
+    <div class="cartouche" id="cartouche" role="region" aria-label="Welcome terminal">
+      <div class="glyph-col" id="glyphCol" aria-hidden="false"></div>
 
-        <div class="terminal-container">
-          <div class="terminal" aria-live="polite">
-            <div class="prompt">
-              &gt; <span id="typed"></span
-              ><span id="caret" aria-hidden="true">_</span>
-            </div>
-            <div
-              id="hint"
-              style="
-                margin-top: 8px;
-                color: rgba(239, 232, 208, 0.6);
-                font-size: 13px;
-              "
-            >
-              Enter your name In English. Press Enter to proceed.
-            </div>
+      <div class="terminal-container">
+        <div class="terminal" aria-live="polite">
+          <div class="prompt">
+            &gt; <span id="typed"></span><span id="caret" aria-hidden="true">_</span>
           </div>
+          <input id="realInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            style="
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+    width: 0;
+  " />
+        </div>
 
-          <div class="controls">
-            <button id="clearBtn" class="cta">Clear</button>
-            <button id="enterBtn" class="cta">Enter ↵</button>
-          </div>
+        <div class="controls">
+          <button id="clearBtn" class="cta">Clear</button>
+          <button id="enterBtn" class="cta">Enter ↵</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="swarm" id="swarm" aria-hidden="true"></div>
-    <div class="portal" id="portal" aria-hidden="true"></div>
-    <div class="portal-text" id="portalText" aria-hidden="true">WELCOME</div>
+  <div class="swarm" id="swarm" aria-hidden="true"></div>
+  <div class="portal" id="portal" aria-hidden="true"></div>
+  <div class="portal-text" id="portalText" aria-hidden="true">WELCOME</div>
 
-    <script src="js/welcome.js"></script>
-  </body>
+  <script src="js/welcome.js"></script>
+</body>
+
 </html>
